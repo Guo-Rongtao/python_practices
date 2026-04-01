@@ -2,21 +2,20 @@ import math
 import numpy as np
 
 
-# 辅助函数：格式化 N(U) 字符串
+#辅助函数：格式化 N(U) 字符串
 
 def format_NU(N_val, U_val, sig_figs=2):
 
-    # 按照大学物理实验要求格式化结果：
-    # 1. U 保留两位有效数字
-    # 2. N 四舍五入到与 U 相同的精度（末位对齐）
+    #1. U 保留两位有效数字
+    #2. N 四舍五入到与 U 相同的精度（末位对齐）
 
     if U_val == 0:
         return f"{N_val}(0)"
-    # 计算 U 的量级，确定需要保留的小数位数，mag 为 U 第一个有效数字所在的位置（例如 0.012 为 -2）：
+    #计算 U 的量级，确定需要保留的小数位数，mag 为 U 第一个有效数字所在的位置（例如 0.012 为 -2）：
     mag = math.floor(math.log10(abs(U_val)))
-    # 为了保留 2 位有效数字，需要保留的小数位数为：
+    #为了保留 2 位有效数字，需要保留的小数位数为：
     decimals = (sig_figs - 1) - mag
-    # 修正：如果 decimals < 0，说明 U 是大于 10 的整数：
+    #修正：如果 decimals < 0，说明 U 是大于 10 的整数：
     if decimals < 0:
         U_sig2 = round(U_val, decimals)
         N_round = round(N_val, decimals)
@@ -24,7 +23,7 @@ def format_NU(N_val, U_val, sig_figs=2):
     else:
         U_sig2 = round(U_val, decimals)
         N_round = round(N_val, decimals)
-        # 生成格式化模板，如 "%.2f(%.2f)"
+        # 生成格式化模板：某数字（不确定度）
         fmt = f"%.{decimals}f(%.{decimals}f)"
         return fmt % (N_round, U_sig2)
 
@@ -32,35 +31,35 @@ def format_NU(N_val, U_val, sig_figs=2):
 def solve(x, y, delta_x=0.1, delta_y=0.1, k=2):
     n_count = len(x)
 
-# --- 计算输入量 x和 y和他们的乘积 S的平均值 ---
+#计算输入量 x和 y和他们的乘积 S的平均值
 
     x_average = np.mean(x)
     y_average = np.mean(y)
     S_average = x_average * y_average
 
-# --- 计算输入量 x 和 y 的 A 类不确定度 ---
-# Python 的 np.std 默认 ddof=0，R 的 sd() 是 ddof=1 (样本标准差)
+#计算输入量 x 和 y 的 A 类不确定度
+#Python 的 np.std 默认 ddof=0，R 的 sd() 是 ddof=1 (样本标准差)
     uA_x= np.std(x, ddof=1) / math.sqrt(n_count)
     uA_y = np.std(y, ddof=1) / math.sqrt(n_count)
-   #【核心】：乘积 S 的 A 类不确定度采用基于偏微分的传递公式：uA_S = sqrt( (dS/dx * uA_x)^2 + (dS/dy * uA_y)^2 )，其中 dS/dx=y, dS/dy=x
+   #乘积 S 的 A 类不确定度采用基于偏微分的传递公式：uA_S = sqrt( (dS/dx * uA_x)^2 + (dS/dy * uA_y)^2 )，其中 dS/dx=y, dS/dy=x
     uA_S = math.sqrt((y_average * uA_x) ** 2 + (x_average * uA_y) ** 2)
 
-# --- 计算 B 类不确定度 ---
+#计算 B 类不确定度
     uB_x = delta_x / math.sqrt(3)
     ub_y = delta_y / math.sqrt(3)
     uB_S = math.sqrt((y_average * uB_x) ** 2 + (x_average * ub_y) ** 2)
 
-# --- 计算合成不确定度 ---
+#计算合成不确定度
     uC_x = math.sqrt(uA_x ** 2 + uB_x ** 2)
     uC_y = math.sqrt(uA_y ** 2 + ub_y ** 2)
     uC_S = math.sqrt(uA_S ** 2 + uB_S ** 2)
 
-# --- 计算扩展不确定度 ---
+#计算扩展不确定度
     U_x = k * uC_x
     U_y = k * uC_y
     U_S = k * uC_S
 
-# 打印结果
+#结果
     print(
         f"x的平均值 = {x_average:.3f} cm,\n\
          x的A类不确定度u_A(x) = {uA_x:.5f} cm,\n  \
@@ -93,9 +92,9 @@ def solve(x, y, delta_x=0.1, delta_y=0.1, k=2):
     print("==========================================\n")
 
 
-# ==================================执行区=======================================
+#输入数据
 if __name__ == "__main__":
-    # --- 输入数据 ---
+
     x_data = np.array([50,50,50,50,50])
     y_data = np.array([1.474,1.474,1.488,1.494,1.488])
     instrument_delta_x = 0.1
